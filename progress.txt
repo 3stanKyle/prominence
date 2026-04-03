@@ -2,6 +2,7 @@
 Started: 2026-04-04
 
 ## Codebase Patterns
+- To avoid circular dependencies, shared functions like `refreshAndPush` go in `usageService.ts` (not `index.ts`), since both `tray.ts` and `index.ts` import from it
 - Preload script at `src/main/preload.ts` exposes `window.prominenceAPI` for renderer IPC — always use `contextBridge.exposeInMainWorld`
 - IPC handlers registered in `src/main/index.ts` inside `app.whenReady().then()` block
 - Main process TypeScript files go in `src/main/`, renderer HTML/CSS in `src/renderer/`
@@ -82,4 +83,18 @@ Started: 2026-04-04
   - Session data comes from `data.session` with `{ used, limit }` — checked via `used > 0 || limit > 0` to distinguish real data from default zeros
   - Section separation pattern: use `.section-divider` with `border-top` + `margin-top` + `padding-top` for visual breaks between overlay sections
   - The `getBarColor()` function is reusable for any ratio-based progress bar (weekly models and session)
+---
+
+## 2026-04-04 - US-007
+- What was implemented: Auto-refresh every 5 minutes via setInterval in main process. `refreshAndPush()` in usageService fetches data and sends `usage-data-updated` IPC to renderer. Tray "Refresh" menu wired to `refreshAndPush()`. Renderer has a "Refresh" button that calls `request-refresh` IPC. Footer shows "Updated X min ago" text that updates every 60 seconds.
+- Files changed:
+  - `src/main/usageService.ts` — added `refreshAndPush()` that fetches data and pushes to overlay via IPC
+  - `src/main/index.ts` — added 5-minute auto-refresh interval, `request-refresh` IPC handler
+  - `src/main/tray.ts` — wired Refresh menu click to `refreshAndPush()`
+  - `src/main/preload.ts` — added `requestRefresh()` to exposed API
+  - `src/renderer/index.html` — added footer with "Last updated" text and Refresh button, `handleRefreshClick()`, `updateLastUpdatedText()`, 60s interval for updating both countdown and last-updated
+- **Learnings for future iterations:**
+  - `refreshAndPush()` lives in `usageService.ts` to avoid circular deps (index↔tray)
+  - Renderer tracks `window._lastUpdatedAt` timestamp, updated on both initial load and push events
+  - The refresh button uses `onclick="handleRefreshClick()"` inline — consistent with the vanilla JS approach used throughout the renderer
 ---
