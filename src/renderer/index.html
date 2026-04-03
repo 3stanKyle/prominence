@@ -79,6 +79,14 @@
       border-radius: 4px;
       transition: width 0.3s ease;
     }
+    .reset-countdown {
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid #2a2a40;
+      text-align: center;
+      font-size: 12px;
+      color: #808090;
+    }
   </style>
 </head>
 <body>
@@ -129,7 +137,61 @@
         `;
       }
 
+      // Add reset countdown section
+      const resetTime = data.models[0] && data.models[0].resetTime;
+      html += '<div id="reset-countdown" class="reset-countdown">';
+      html += resetTime ? formatCountdown(resetTime) : 'Reset time unavailable';
+      html += '</div>';
+
       container.innerHTML = html;
+
+      // Store reset time for interval updates
+      window._resetTime = resetTime || null;
+    }
+
+    function parseResetTime(resetTime) {
+      // Try ISO date string first
+      const asDate = new Date(resetTime);
+      if (!isNaN(asDate.getTime())) {
+        return asDate;
+      }
+      // Try relative format like "3d 2h 15m"
+      const parts = resetTime.match(/(\d+)\s*d/i);
+      const hours = resetTime.match(/(\d+)\s*h/i);
+      const mins = resetTime.match(/(\d+)\s*m/i);
+      if (parts || hours || mins) {
+        const totalMs =
+          ((parts ? parseInt(parts[1], 10) : 0) * 86400000) +
+          ((hours ? parseInt(hours[1], 10) : 0) * 3600000) +
+          ((mins ? parseInt(mins[1], 10) : 0) * 60000);
+        return new Date(Date.now() + totalMs);
+      }
+      return null;
+    }
+
+    function formatCountdown(resetTime) {
+      const target = parseResetTime(resetTime);
+      if (!target) return 'Reset time unavailable';
+
+      const diff = target.getTime() - Date.now();
+      if (diff <= 0) return 'Resets soon';
+
+      const days = Math.floor(diff / 86400000);
+      const hours = Math.floor((diff % 86400000) / 3600000);
+      const minutes = Math.floor((diff % 3600000) / 60000);
+
+      let parts = [];
+      if (days > 0) parts.push(days + 'd');
+      if (hours > 0) parts.push(hours + 'h');
+      parts.push(minutes + 'm');
+
+      return 'Resets in ' + parts.join(' ');
+    }
+
+    function updateCountdown() {
+      const el = document.getElementById('reset-countdown');
+      if (!el || !window._resetTime) return;
+      el.textContent = formatCountdown(window._resetTime);
     }
 
     async function loadUsageData() {
@@ -141,8 +203,14 @@
       }
     }
 
+    // Initialize reset time storage
+    window._resetTime = null;
+
     // Load on startup
     loadUsageData();
+
+    // Update countdown every 60 seconds
+    setInterval(updateCountdown, 60000);
 
     // Listen for push updates from main process
     window.prominenceAPI.onUsageDataUpdated((data) => {
