@@ -1,0 +1,25 @@
+{
+  "name": "prominence",
+  "version": "0.1.0",
+  "description": "Claude Code Usage HUD - system tray app showing plan usage limits",
+  "main": "dist/main/index.js",
+  "scripts": {
+    "start": "tsc && electron .",
+    "build": "tsc && electron-builder",
+    "typecheck": "tsc --noEmit",
+    "lint": "echo 'No linter configured yet'"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0",
+    "typescript": "^5.6.0"
+  },
+  "build": {
+    "appId": "com.prominence.usage-hud",
+    "productName": "Prominence",
+    "files": [
+      "dist/**/*",
+      "src/renderer/**/*"
+    ]
+  }
+}

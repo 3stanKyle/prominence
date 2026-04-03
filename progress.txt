@@ -1,3 +1,23 @@
 # Ralph Progress Log
 Started: 2026-04-04
+
+## Codebase Patterns
+- Main process TypeScript files go in `src/main/`, renderer HTML/CSS in `src/renderer/`
+- Use `nativeImage.createFromBuffer()` for programmatic tray icons (no external PNG needed)
+- Electron `window-all-closed` handler must not call `app.quit()` for tray apps
+- TypeScript compiles from `src/` to `dist/`, entry point is `dist/main/index.js`
+---
+
+## 2026-04-04 - US-001
+- What was implemented: Electron app scaffold with system tray icon, context menu (Show/Refresh/Quit), single instance lock, and minimal renderer HTML
+- Files changed:
+  - `package.json` — project config with electron, typescript, start/build scripts
+  - `tsconfig.json` — TypeScript config targeting ES2020/commonjs
+  - `src/main/index.ts` — app entry: single instance lock, tray creation, window-all-closed handler
+  - `src/main/tray.ts` — system tray with programmatic icon and context menu
+  - `src/renderer/index.html` — minimal dark-themed placeholder page
+- **Learnings for future iterations:**
+  - Electron's `window-all-closed` event handler signature takes no arguments — don't type `(e: Event)`
+  - `app.requestSingleInstanceLock()` must be called before `app.whenReady()` for proper behavior
+  - Tray icon created via `nativeImage.createFromBuffer` with raw RGBA pixel data works cross-platform
 ---
