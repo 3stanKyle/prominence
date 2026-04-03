@@ -6,6 +6,8 @@ Started: 2026-04-04
 - Use `nativeImage.createFromBuffer()` for programmatic tray icons (no external PNG needed)
 - Electron `window-all-closed` handler must not call `app.quit()` for tray apps
 - TypeScript compiles from `src/` to `dist/`, entry point is `dist/main/index.js`
+- For transparent frameless windows: `html,body { background: transparent }`, visible background on a container div
+- Overlay window is hidden/shown (not destroyed/recreated) for performance — use `getOverlayWindow()` to access it
 ---
 
 ## 2026-04-04 - US-001
@@ -20,4 +22,17 @@ Started: 2026-04-04
   - Electron's `window-all-closed` event handler signature takes no arguments — don't type `(e: Event)`
   - `app.requestSingleInstanceLock()` must be called before `app.whenReady()` for proper behavior
   - Tray icon created via `nativeImage.createFromBuffer` with raw RGBA pixel data works cross-platform
+---
+
+## 2026-04-04 - US-002
+- What was implemented: Floating overlay window that toggles on tray left-click or "Show" menu item. Frameless, transparent, always-on-top, positioned near system tray. Closes on Escape key and on blur (click outside). Dark theme with rounded corners and drop shadow.
+- Files changed:
+  - `src/main/overlay.ts` — new module: createOverlayWindow, toggleOverlay, show/hide/position logic
+  - `src/main/tray.ts` — wired tray click and Show menu to toggleOverlay
+  - `src/renderer/index.html` — added Escape key handler, transparent background with rounded container and box shadow
+- **Learnings for future iterations:**
+  - For transparent frameless windows, set `html, body { background: transparent }` and put the visible background on a container div with `border-radius` and `box-shadow`
+  - `screen.getPrimaryDisplay().workAreaSize` gives the usable area (excludes taskbar) — use it to position near the tray
+  - `window.close()` from renderer closes the BrowserWindow — used for Escape key handling
+  - Overlay blur handler hides (not destroys) the window for fast re-show
 ---
