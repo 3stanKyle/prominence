@@ -63,3 +63,13 @@ Started: 2026-04-04
   - Renderer HTML uses vanilla JS (no framework) — all DOM updates done via `innerHTML` on `#usage-content`
   - `window.prominenceAPI` is typed as `any` in the renderer (no TS in HTML script tags) — type safety comes from the preload definition
 ---
+
+## 2026-04-04 - US-005
+- What was implemented: Weekly reset countdown below progress bars showing "Resets in Xd Xh Xm". Parses both ISO date strings and relative time formats (e.g., "3d 2h 15m") from the usage service's `resetTime` field. Updates every 60 seconds via setInterval. Shows "Reset time unavailable" when no reset time is present, "Resets soon" when countdown reaches zero.
+- Files changed:
+  - `src/renderer/index.html` — added `.reset-countdown` CSS, `parseResetTime()` (handles ISO + relative), `formatCountdown()`, `updateCountdown()` with 60s interval, countdown section appended after model rows in `renderUsageData()`
+- **Learnings for future iterations:**
+  - Reset time from the usage service can be either an ISO date string or a relative format like "3d 2h 15m" — the renderer handles both via `parseResetTime()`
+  - `window._resetTime` stores the raw reset time string for interval-based updates without re-fetching data
+  - Countdown is re-rendered from scratch on each `renderUsageData()` call (from data push or manual refresh), and only text-updated by the 60s interval
+---
