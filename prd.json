@@ -149,7 +149,7 @@
         "Typecheck passes"
       ],
       "priority": 9,
-      "passes": false,
+      "passes": true,
       "notes": "Claude Code hooks go in ~/.claude/settings.json under the 'hooks' key. The hook should use 'command' with background execution."
     }
   ]

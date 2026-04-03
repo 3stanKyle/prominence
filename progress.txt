@@ -108,3 +108,14 @@ Started: 2026-04-04
   - `showOverlay()` handles null/destroyed window checks internally, safe to call from anywhere
   - The single instance lock + second-instance pattern: first instance holds the lock and listens for events; second instance fails lock and quits immediately via `app.quit()`
 ---
+
+## 2026-04-04 - US-009
+- What was implemented: Created SETUP.md documenting how to configure a Claude Code session-start hook that auto-launches Prominence. Includes hook config snippet for `~/.claude/settings.json` using `SessionStart` event with `"matcher": "startup"`, background execution via trailing `&`, and `timeout: 5`. Documents setup, verification, troubleshooting, and merging with existing settings.
+- Files changed:
+  - `SETUP.md` — new file: full setup guide including hook configuration, verification steps, troubleshooting, and usage with built app
+- **Learnings for future iterations:**
+  - Claude Code hooks go in `~/.claude/settings.json` under the `hooks` key, with event types like `SessionStart`, `PreToolUse`, `PostToolUse`, etc.
+  - Hook matcher `"startup"` fires only on new sessions (not resume/clear/compact)
+  - Use trailing `&` in the command and `timeout: 5` to ensure the hook doesn't block Claude Code session startup
+  - The single-instance lock from US-008 makes the hook idempotent — relaunching just triggers a refresh
+---
