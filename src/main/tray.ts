@@ -1,6 +1,7 @@
 import { Tray, Menu, nativeImage, app } from 'electron';
 import path from 'path';
 import { toggleOverlay } from './overlay';
+import { refreshAndPush } from './usageService';
 
 let tray: Tray | null = null;
 
@@ -20,7 +21,7 @@ export function createTray(): Tray {
     {
       label: 'Refresh',
       click: () => {
-        // Future: refresh usage data
+        refreshAndPush();
       },
     },
     { type: 'separator' },

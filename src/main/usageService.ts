@@ -1,4 +1,5 @@
 import { execFile } from 'child_process';
+import { getOverlayWindow } from './overlay';
 
 export interface ModelUsage {
   name: string;
@@ -15,6 +16,17 @@ export interface SessionUsage {
 export interface UsageData {
   models: ModelUsage[];
   session: SessionUsage;
+}
+
+/**
+ * Fetch usage data and push it to the renderer via 'usage-data-updated' IPC.
+ */
+export async function refreshAndPush(): Promise<void> {
+  const data = await fetchUsageData();
+  const win = getOverlayWindow();
+  if (win && !win.isDestroyed()) {
+    win.webContents.send('usage-data-updated', data);
+  }
 }
 
 /**
