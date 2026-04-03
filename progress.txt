@@ -98,3 +98,13 @@ Started: 2026-04-04
   - Renderer tracks `window._lastUpdatedAt` timestamp, updated on both initial load and push events
   - The refresh button uses `onclick="handleRefreshClick()"` inline — consistent with the vanilla JS approach used throughout the renderer
 ---
+
+## 2026-04-04 - US-008
+- What was implemented: Wired the `second-instance` event handler to call `refreshAndPush()` (triggers data fetch and IPC push to renderer) and `showOverlay()` (shows the overlay window). Exported `showOverlay()` from overlay.ts. The second instance already exits via the `if (!gotTheLock) app.quit()` guard from US-001.
+- Files changed:
+  - `src/main/index.ts` — imported `showOverlay`, replaced stub comment in `second-instance` handler with `refreshAndPush()` and `showOverlay()` calls
+  - `src/main/overlay.ts` — exported `showOverlay()` function (was previously private)
+- **Learnings for future iterations:**
+  - `showOverlay()` handles null/destroyed window checks internally, safe to call from anywhere
+  - The single instance lock + second-instance pattern: first instance holds the lock and listens for events; second instance fails lock and quits immediately via `app.quit()`
+---

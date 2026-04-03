@@ -134,7 +134,7 @@
         "Typecheck passes"
       ],
       "priority": 8,
-      "passes": false,
+      "passes": true,
       "notes": "This enables the Claude Code hook to 'launch' the app and have it just refresh if already running"
     },
     {
