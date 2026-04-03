@@ -1,6 +1,8 @@
 import { BrowserWindow, screen } from 'electron';
 import path from 'path';
 
+const PRELOAD_PATH = path.join(__dirname, 'preload.js');
+
 let overlayWindow: BrowserWindow | null = null;
 
 export function createOverlayWindow(): BrowserWindow {
@@ -20,6 +22,7 @@ export function createOverlayWindow(): BrowserWindow {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
+      preload: PRELOAD_PATH,
     },
   });
 
