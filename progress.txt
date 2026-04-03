@@ -52,3 +52,14 @@ Started: 2026-04-04
   - `contextBridge.exposeInMainWorld` is the correct way to expose IPC to renderer with contextIsolation:true
   - The renderer can call `window.prominenceAPI.getUsageData()` and listen via `window.prominenceAPI.onUsageDataUpdated(callback)`
 ---
+
+## 2026-04-04 - US-004
+- What was implemented: Renderer fetches usage data via `window.prominenceAPI.getUsageData()` on load and renders per-model progress bars with color coding. Also listens for `usage-data-updated` push events. Shows "Unable to fetch usage data" when data is null.
+- Files changed:
+  - `src/renderer/index.html` — replaced placeholder with dynamic rendering: CSS custom properties for colors, `getBarColor()` for green/yellow/red thresholds, `renderUsageData()` builds model rows with labeled progress bars showing "X / Y" counts
+- **Learnings for future iterations:**
+  - CSS custom properties (`--color-green`, `--color-yellow`, `--color-red`, `--color-bar-bg`) defined on `:root` for consistent theming across the overlay
+  - Progress bar color thresholds: green (<60%), yellow (60-85%), red (≥85%) — applied via inline `style` on `.progress-fill`
+  - Renderer HTML uses vanilla JS (no framework) — all DOM updates done via `innerHTML` on `#usage-content`
+  - `window.prominenceAPI` is typed as `any` in the renderer (no TS in HTML script tags) — type safety comes from the preload definition
+---
