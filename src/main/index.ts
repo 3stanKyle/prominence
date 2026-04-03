@@ -1,6 +1,7 @@
 import { app, ipcMain } from 'electron';
 import { createTray } from './tray';
 import { fetchUsageData, refreshAndPush } from './usageService';
+import { showOverlay } from './overlay';
 
 const AUTO_REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
@@ -11,7 +12,8 @@ if (!gotTheLock) {
   app.quit();
 } else {
   app.on('second-instance', () => {
-    // Future: refresh data and show overlay
+    refreshAndPush();
+    showOverlay();
   });
 
   app.whenReady().then(() => {

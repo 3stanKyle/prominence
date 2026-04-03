@@ -52,7 +52,7 @@ export function toggleOverlay(): void {
   }
 }
 
-function showOverlay(): void {
+export function showOverlay(): void {
   if (!overlayWindow || overlayWindow.isDestroyed()) return;
 
   positionNearTray();
