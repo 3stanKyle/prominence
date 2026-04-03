@@ -52,7 +52,7 @@
         "Typecheck passes"
       ],
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "notes": "Investigate ~/.claude/ directory for cached usage data first. Fall back to parsing CLI output of 'claude usage' if needed."
     },
     {

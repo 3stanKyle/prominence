@@ -2,6 +2,8 @@
 Started: 2026-04-04
 
 ## Codebase Patterns
+- Preload script at `src/main/preload.ts` exposes `window.prominenceAPI` for renderer IPC — always use `contextBridge.exposeInMainWorld`
+- IPC handlers registered in `src/main/index.ts` inside `app.whenReady().then()` block
 - Main process TypeScript files go in `src/main/`, renderer HTML/CSS in `src/renderer/`
 - Use `nativeImage.createFromBuffer()` for programmatic tray icons (no external PNG needed)
 - Electron `window-all-closed` handler must not call `app.quit()` for tray apps
@@ -35,4 +37,18 @@ Started: 2026-04-04
   - `screen.getPrimaryDisplay().workAreaSize` gives the usable area (excludes taskbar) — use it to position near the tray
   - `window.close()` from renderer closes the BrowserWindow — used for Escape key handling
   - Overlay blur handler hides (not destroys) the window for fast re-show
+---
+
+## 2026-04-04 - US-003
+- What was implemented: Usage data fetching service that runs `claude usage` CLI and parses output into structured data. Preload script for secure IPC between renderer and main process. IPC handler `get-usage-data` registered in main process.
+- Files changed:
+  - `src/main/usageService.ts` — new module: fetchUsageData(), parseUsageOutput(), normalizeModelName(). Returns UsageData | null.
+  - `src/main/preload.ts` — new preload script exposing `window.prominenceAPI` with `getUsageData()` and `onUsageDataUpdated()` via contextBridge
+  - `src/main/index.ts` — added ipcMain.handle('get-usage-data') wired to fetchUsageData()
+  - `src/main/overlay.ts` — added preload script path to BrowserWindow webPreferences
+- **Learnings for future iterations:**
+  - `claude usage` CLI command may not exist yet or may produce no output — the service handles this gracefully by returning null
+  - Preload script compiles to `dist/main/preload.js` — the overlay references it via `path.join(__dirname, 'preload.js')`
+  - `contextBridge.exposeInMainWorld` is the correct way to expose IPC to renderer with contextIsolation:true
+  - The renderer can call `window.prominenceAPI.getUsageData()` and listen via `window.prominenceAPI.onUsageDataUpdated(callback)`
 ---
