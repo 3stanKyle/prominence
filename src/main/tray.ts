@@ -1,5 +1,6 @@
 import { Tray, Menu, nativeImage, app } from 'electron';
 import path from 'path';
+import { toggleOverlay } from './overlay';
 
 let tray: Tray | null = null;
 
@@ -13,7 +14,7 @@ export function createTray(): Tray {
     {
       label: 'Show',
       click: () => {
-        // Future: toggle overlay window
+        toggleOverlay();
       },
     },
     {
@@ -32,6 +33,11 @@ export function createTray(): Tray {
   ]);
 
   tray.setContextMenu(contextMenu);
+
+  // Left-click toggles overlay
+  tray.on('click', () => {
+    toggleOverlay();
+  });
 
   return tray;
 }
