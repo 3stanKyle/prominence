@@ -1,8 +1,14 @@
 {
   "name": "prominence",
   "version": "0.1.0",
-  "description": "Claude Code Usage HUD - system tray app showing plan usage limits",
+  "description": "Desktop HUD that tracks your Claude Code usage in real time",
   "main": "dist/main/index.js",
+  "author": "3stankyle",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/3stankyle/prominence.git"
+  },
   "scripts": {
     "start": "tsc && electron .",
     "build": "tsc && electron-builder",
@@ -20,6 +26,24 @@
     "files": [
       "dist/**/*",
       "src/renderer/**/*"
-    ]
+    ],
+    "win": {
+      "target": ["nsis"],
+      "icon": "build/icon.ico"
+    },
+    "mac": {
+      "target": ["dmg"],
+      "icon": "build/icon.icns",
+      "category": "public.app-category.developer-tools"
+    },
+    "linux": {
+      "target": ["AppImage"],
+      "icon": "build/icon.png",
+      "category": "Development"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false
+    }
   }
 }

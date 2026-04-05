@@ -11,14 +11,15 @@ export function createOverlayWindow(): BrowserWindow {
   }
 
   overlayWindow = new BrowserWindow({
-    width: 320,
-    height: 200,
+    width: 360,
+    height: 460,
     frame: false,
     transparent: true,
     alwaysOnTop: true,
     skipTaskbar: true,
     resizable: false,
     show: false,
+    hasShadow: false,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -27,11 +28,6 @@ export function createOverlayWindow(): BrowserWindow {
   });
 
   overlayWindow.loadFile(path.join(__dirname, '../../src/renderer/index.html'));
-
-  // Close on blur (click outside)
-  overlayWindow.on('blur', () => {
-    hideOverlay();
-  });
 
   overlayWindow.on('closed', () => {
     overlayWindow = null;
@@ -53,14 +49,18 @@ export function toggleOverlay(): void {
 }
 
 export function showOverlay(): void {
-  if (!overlayWindow || overlayWindow.isDestroyed()) return;
+  if (!overlayWindow || overlayWindow.isDestroyed()) {
+    createOverlayWindow();
+  }
 
-  positionNearTray();
-  overlayWindow.show();
-  overlayWindow.focus();
+  if (!overlayWindow!.isVisible()) {
+    positionNearTray();
+  }
+  overlayWindow!.show();
+  overlayWindow!.focus();
 }
 
-function hideOverlay(): void {
+export function hideOverlay(): void {
   if (!overlayWindow || overlayWindow.isDestroyed()) return;
   overlayWindow.hide();
 }
@@ -72,9 +72,8 @@ function positionNearTray(): void {
   const { width: screenWidth, height: screenHeight } = display.workAreaSize;
   const [windowWidth, windowHeight] = overlayWindow.getSize();
 
-  // Position in bottom-right corner, near system tray on Windows
-  const x = screenWidth - windowWidth - 10;
-  const y = screenHeight - windowHeight - 10;
+  const x = screenWidth - windowWidth - 8;
+  const y = screenHeight - windowHeight - 8;
 
   overlayWindow.setPosition(x, y);
 }

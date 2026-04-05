@@ -1,5 +1,13 @@
 node_modules/
 dist/
 out/
-.env
 *.log
+.DS_Store
+Thumbs.db
+*.exe
+*.dmg
+*.AppImage
+*.snap
+*.deb
+*.rpm
+release/

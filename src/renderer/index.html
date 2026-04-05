@@ -6,154 +6,392 @@
   <title>Prominence</title>
   <style>
     :root {
-      --color-green: #4caf50;
-      --color-yellow: #ff9800;
-      --color-red: #f44336;
-      --color-bar-bg: #2a2a40;
+      --claude-orange: #D4845A;
+      --claude-orange-light: #E8A070;
+      --glass-bg: rgba(10, 8, 16, 0.82);
+      --glass-border: rgba(255, 255, 255, 0.15);
+      --text-primary: #F0E8E0;
+      --text-secondary: rgba(212, 132, 90, 0.75);
+      --text-dim: rgba(200, 180, 160, 0.4);
+      --bar-bg: rgba(212, 132, 90, 0.1);
+      --color-green: #5ABF6A;
+      --color-yellow: #E8A040;
+      --color-red: #E85545;
+      --divider: rgba(212, 132, 90, 0.08);
     }
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body {
       background: transparent;
+      overflow: hidden;
+      width: 100%;
+      height: 100%;
     }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      color: #e0e0e0;
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--text-primary);
+      /* enough padding so the shadow never clips */
       padding: 16px;
       user-select: none;
     }
+
+    /* --- Glass Card --- */
     .container {
-      background: #1a1a2e;
-      border-radius: 10px;
-      padding: 16px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      background: var(--glass-bg);
+      backdrop-filter: blur(40px) saturate(1.4) brightness(0.9);
+      -webkit-backdrop-filter: blur(40px) saturate(1.4) brightness(0.9);
+      border-radius: 14px;
+      border: 1px solid var(--glass-border);
+      padding: 0;
+      box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.5),
+        0 2px 8px rgba(0, 0, 0, 0.25);
     }
-    .header {
-      text-align: center;
-      margin-bottom: 12px;
+
+    /* --- Titlebar (draggable) --- */
+    .titlebar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px 0 14px;
+      -webkit-app-region: drag;
     }
-    .header h1 {
-      font-size: 14px;
+    .greeting-area {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .greeting {
+      font-size: 13px;
       font-weight: 600;
-      color: #a0a0c0;
+      color: var(--claude-orange-light);
+    }
+    .plan-badge {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--claude-orange);
+      background: rgba(212, 132, 90, 0.12);
+      border: 1px solid rgba(212, 132, 90, 0.2);
+      border-radius: 4px;
+      padding: 1px 6px;
+    }
+    .window-controls {
+      display: flex;
+      gap: 6px;
+      -webkit-app-region: no-drag;
+    }
+    .win-btn {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      border: none;
+      background: rgba(255, 255, 255, 0.06);
+      color: rgba(200, 180, 160, 0.5);
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, color 0.15s;
+      line-height: 1;
+    }
+    .win-btn:hover { background: rgba(255, 255, 255, 0.12); color: var(--text-primary); }
+    .win-btn.close:hover { background: rgba(232, 85, 69, 0.5); color: #fff; }
+
+    /* --- Character Animation Strip --- */
+    .character-strip {
+      position: relative;
+      height: 32px;
+      margin: 4px 14px 0 14px;
+      overflow: hidden;
+      border-bottom: 1px solid var(--divider);
+    }
+    .pixel-character {
+      position: absolute;
+      bottom: 2px;
+      width: 24px;
+      height: 24px;
+      image-rendering: pixelated;
+    }
+    .pixel-character.walking {
+      animation: bounce-walk 4s linear infinite, bob 0.3s steps(2) infinite;
+    }
+    .pixel-character.idle {
+      left: 50%;
+      transform: translateX(-50%);
+      animation: idle-bob 2s ease-in-out infinite;
+    }
+    /* bounce: go right then come back left */
+    @keyframes bounce-walk {
+      0%   { left: 0px; }
+      50%  { left: calc(100% - 24px); }
+      100% { left: 0px; }
+    }
+    @keyframes bob {
+      0%, 100% { transform: translateY(0); }
+      50%      { transform: translateY(-2px); }
+    }
+    @keyframes idle-bob {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50%      { transform: translateX(-50%) translateY(-1px); }
+    }
+
+    /* --- Content area --- */
+    .content { padding: 10px 14px 14px 14px; }
+
+    .section-title {
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      margin-bottom: 8px;
     }
     .error-msg {
       text-align: center;
-      font-size: 12px;
-      color: #808090;
-      padding: 8px 0;
-    }
-    .section-title {
       font-size: 11px;
-      font-weight: 600;
-      color: #808090;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 8px;
+      color: var(--text-dim);
+      padding: 12px 0;
     }
-    .bucket-row {
-      margin-bottom: 10px;
-    }
-    .bucket-row:last-child {
-      margin-bottom: 0;
-    }
+
+    /* --- Progress Bars --- */
+    .bucket-row { margin-bottom: 9px; }
     .bucket-label {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 4px;
+      margin-bottom: 3px;
     }
-    .bucket-name {
-      font-size: 12px;
-      font-weight: 600;
-      color: #c0c0d0;
-    }
-    .bucket-pct {
-      font-size: 11px;
-      color: #808090;
-    }
+    .bucket-name { font-size: 11px; font-weight: 600; color: var(--text-primary); }
+    .bucket-pct  { font-size: 10px; font-weight: 600; color: var(--text-secondary); }
     .progress-bar {
       width: 100%;
-      height: 8px;
-      background: var(--color-bar-bg);
-      border-radius: 4px;
+      height: 6px;
+      background: var(--bar-bg);
+      border-radius: 3px;
       overflow: hidden;
     }
     .progress-fill {
       height: 100%;
-      border-radius: 4px;
-      transition: width 0.3s ease;
+      border-radius: 3px;
+      transition: width 0.4s ease;
     }
+
+    /* --- Reset Countdown --- */
     .reset-countdown {
-      margin-top: 12px;
-      padding-top: 10px;
-      border-top: 1px solid #2a2a40;
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px solid var(--divider);
       text-align: center;
-      font-size: 12px;
-      color: #808090;
+      font-size: 11px;
+      color: var(--text-dim);
     }
+
+    /* --- Sections --- */
     .section-divider {
-      margin-top: 14px;
-      padding-top: 12px;
-      border-top: 1px solid #2a2a40;
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px solid var(--divider);
     }
-    .extra-usage {
-      font-size: 12px;
-      color: #c0c0d0;
+    .extra-usage { font-size: 11px; color: var(--text-secondary); }
+    .extra-balance {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--color-green);
+      margin-bottom: 2px;
     }
-    .extra-usage-disabled {
-      font-size: 12px;
-      color: #808090;
-    }
+    .extra-detail { font-size: 10px; color: var(--text-dim); }
+
+    /* --- Footer --- */
     .footer {
-      margin-top: 12px;
-      padding-top: 10px;
-      border-top: 1px solid #2a2a40;
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px solid var(--divider);
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
-    .last-updated {
-      font-size: 10px;
-      color: #606070;
-    }
+    .last-updated { font-size: 9px; color: var(--text-dim); }
     .refresh-btn {
-      background: #2a2a40;
-      border: 1px solid #3a3a50;
-      border-radius: 4px;
-      color: #a0a0c0;
-      font-size: 10px;
-      padding: 3px 8px;
+      background: rgba(212, 132, 90, 0.1);
+      border: 1px solid rgba(212, 132, 90, 0.2);
+      border-radius: 6px;
+      color: var(--claude-orange-light);
+      font-size: 9px;
+      font-weight: 600;
+      padding: 3px 10px;
       cursor: pointer;
+      letter-spacing: 0.5px;
+      transition: background 0.2s;
     }
-    .refresh-btn:hover {
-      background: #3a3a50;
+    .refresh-btn:hover { background: rgba(212, 132, 90, 0.2); }
+
+    /* --- Activity dot --- */
+    .activity-dot {
+      display: inline-block;
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--text-dim);
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+    .activity-dot.active {
+      background: var(--color-green);
+      box-shadow: 0 0 6px rgba(90, 191, 106, 0.6);
+      animation: pulse-dot 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="header">
-      <h1>Prominence</h1>
+    <div class="titlebar">
+      <div class="greeting-area">
+        <span class="greeting" id="greeting">Hi there<span id="activity-dot" class="activity-dot"></span></span>
+        <span class="plan-badge" id="plan-badge" style="display:none"></span>
+      </div>
+      <div class="window-controls">
+        <button class="win-btn minimize" onclick="window.prominenceAPI.minimizeWindow()" title="Minimize to tray">&#x2013;</button>
+        <button class="win-btn close" onclick="window.prominenceAPI.closeWindow()" title="Close">&#x2715;</button>
+      </div>
     </div>
-    <div id="usage-content">
+
+    <div class="character-strip">
+      <canvas id="pixel-char" class="pixel-character idle" width="24" height="24"></canvas>
+    </div>
+
+    <div class="content" id="usage-content">
       <p class="error-msg">Usage data loading...</p>
     </div>
   </div>
+
   <script>
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        window.close();
+    // --- Greeting ---
+    (async function setGreeting() {
+      try {
+        const raw = await window.prominenceAPI.getUsername();
+        const firstName = (raw || '').split(' ')[0] || '';
+        const name = firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
+        const el = document.getElementById('greeting');
+        const dot = document.getElementById('activity-dot');
+        if (el && name) el.innerHTML = 'Hi, ' + name + (dot ? dot.outerHTML : '');
+      } catch {}
+    })();
+
+    // --- Plan badge ---
+    (async function setPlan() {
+      try {
+        const plan = await window.prominenceAPI.getPlanInfo();
+        const badge = document.getElementById('plan-badge');
+        if (badge && plan) {
+          badge.textContent = plan;
+          badge.style.display = 'inline-block';
+        }
+      } catch {}
+    })();
+
+    // --- Pixel Character ---
+    function drawCharacter(ctx, frame, facingRight) {
+      const O = '#D4845A';
+      const B = '#000000';
+      const T = null;
+      const s = 2;
+
+      const base = [
+        [T,T,O,O,T,T,T,T,O,O,T,T],
+        [T,T,O,O,O,O,O,O,O,O,T,T],
+        [T,T,O,O,O,O,O,O,O,O,T,T],
+        [T,T,O,B,O,O,O,B,O,O,T,T],
+        [T,T,O,O,O,O,O,O,O,O,T,T],
+        [O,O,O,O,O,O,O,O,O,O,O,O],
+        [T,T,O,O,O,O,O,O,O,O,T,T],
+      ];
+      const legs0 = [
+        [T,T,O,O,T,T,T,O,O,T,T,T],
+        [T,T,O,O,T,T,T,O,O,T,T,T],
+        [T,T,T,T,T,T,T,T,T,T,T,T],
+      ];
+      const legs1 = [
+        [T,T,T,O,O,T,T,T,O,O,T,T],
+        [T,T,T,O,O,T,T,T,O,O,T,T],
+        [T,T,T,T,T,T,T,T,T,T,T,T],
+      ];
+
+      let grid = [...base, ...(frame % 2 === 0 ? legs0 : legs1)];
+
+      // Flip horizontally when walking left
+      if (!facingRight) {
+        grid = grid.map(row => [...row].reverse());
       }
+
+      ctx.clearRect(0, 0, 24, 24);
+      for (let y = 0; y < grid.length; y++) {
+        for (let x = 0; x < grid[y].length; x++) {
+          if (grid[y][x]) {
+            ctx.fillStyle = grid[y][x];
+            ctx.fillRect(x * s, y * s + 2, s, s);
+          }
+        }
+      }
+    }
+
+    const charCanvas = document.getElementById('pixel-char');
+    const charCtx = charCanvas.getContext('2d');
+    let charFrame = 0;
+    let facingRight = true;
+
+    drawCharacter(charCtx, 0, true);
+
+    // Track bounce direction by reading the animation progress
+    setInterval(() => {
+      charFrame++;
+      // Determine direction from CSS animation: bounce-walk goes 0->50% right, 50%->100% left
+      // Use a simple timer approach: 4s total, first 2s right, second 2s left
+      if (isActive) {
+        const t = (Date.now() / 1000) % 4;
+        facingRight = t < 2;
+      }
+      drawCharacter(charCtx, charFrame, facingRight);
+    }, 250);
+
+    // --- Activity detection ---
+    let isActive = false;
+    async function checkActivity() {
+      try {
+        const active = await window.prominenceAPI.isClaudeActive();
+        const dot = document.getElementById('activity-dot');
+        const char = document.getElementById('pixel-char');
+        if (active !== isActive) {
+          isActive = active;
+          if (active) {
+            dot.classList.add('active');
+            char.classList.remove('idle');
+            char.classList.add('walking');
+          } else {
+            dot.classList.remove('active');
+            char.classList.remove('walking');
+            char.classList.add('idle');
+          }
+        }
+      } catch {}
+    }
+    checkActivity();
+    setInterval(checkActivity, 5000);
+
+    // --- Escape to close ---
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') window.prominenceAPI.closeWindow();
     });
 
+    // --- Usage rendering ---
     function getBarColor(pct) {
       if (pct >= 85) return 'var(--color-red)';
       if (pct >= 60) return 'var(--color-yellow)';
-      return 'var(--color-green)';
+      return 'var(--claude-orange)';
     }
 
     function renderUsageData(data) {
@@ -168,7 +406,7 @@
       for (const bucket of data.buckets) {
         const pct = Math.min(bucket.utilization, 100);
         const color = getBarColor(pct);
-
+        const glow = pct >= 60 ? 'box-shadow: 0 0 8px ' + (pct >= 85 ? 'rgba(232,85,69,0.3)' : 'rgba(232,160,64,0.3)') + ';' : '';
         html += `
           <div class="bucket-row">
             <div class="bucket-label">
@@ -176,13 +414,13 @@
               <span class="bucket-pct">${pct.toFixed(0)}%</span>
             </div>
             <div class="progress-bar">
-              <div class="progress-fill" style="width: ${pct}%; background: ${color};"></div>
+              <div class="progress-fill" style="width: ${pct}%; background: ${color}; ${glow}"></div>
             </div>
           </div>
         `;
       }
 
-      // Reset countdown from the first bucket with a reset time
+      // Reset countdown
       const firstReset = data.buckets.find(b => b.resetsAt);
       html += '<div id="reset-countdown" class="reset-countdown">';
       if (firstReset && firstReset.resetsAt) {
@@ -194,18 +432,20 @@
       }
       html += '</div>';
 
-      // Extra usage section
+      // Extra usage with prominent balance
       if (data.extraUsage) {
+        const remaining = data.extraUsage.monthlyLimit - data.extraUsage.usedCredits;
         html += '<div class="section-divider">';
-        html += '<div class="section-title">Extra Usage</div>';
-        html += `<p class="extra-usage">$${data.extraUsage.usedCredits.toFixed(2)} / $${data.extraUsage.monthlyLimit.toFixed(0)} monthly</p>`;
+        html += '<div class="section-title">Extra Usage Balance</div>';
+        html += `<div class="extra-balance">$${remaining.toFixed(2)}</div>`;
+        html += `<div class="extra-detail">$${data.extraUsage.usedCredits.toFixed(2)} used of $${data.extraUsage.monthlyLimit.toFixed(0)} monthly limit</div>`;
         html += '</div>';
       }
 
       // Footer
       html += '<div class="footer">';
       html += '<span id="last-updated" class="last-updated">Updated just now</span>';
-      html += '<button id="refresh-btn" class="refresh-btn" onclick="handleRefreshClick()">Refresh</button>';
+      html += '<button id="refresh-btn" class="refresh-btn" onclick="handleRefreshClick()">REFRESH</button>';
       html += '</div>';
 
       container.innerHTML = html;
@@ -214,19 +454,15 @@
     function formatCountdown(isoDate) {
       const target = new Date(isoDate);
       if (isNaN(target.getTime())) return 'Reset time unavailable';
-
       const diff = target.getTime() - Date.now();
       if (diff <= 0) return 'Resets soon';
-
-      const days = Math.floor(diff / 86400000);
-      const hours = Math.floor((diff % 86400000) / 3600000);
-      const minutes = Math.floor((diff % 3600000) / 60000);
-
+      const d = Math.floor(diff / 86400000);
+      const h = Math.floor((diff % 86400000) / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
       let parts = [];
-      if (days > 0) parts.push(days + 'd');
-      if (hours > 0) parts.push(hours + 'h');
-      parts.push(minutes + 'm');
-
+      if (d > 0) parts.push(d + 'd');
+      if (h > 0) parts.push(h + 'h');
+      parts.push(m + 'm');
       return 'Resets in ' + parts.join(' ');
     }
 
@@ -242,13 +478,8 @@
     function updateLastUpdatedText() {
       const el = document.getElementById('last-updated');
       if (!el || !window._lastUpdatedAt) return;
-      const diffMs = Date.now() - window._lastUpdatedAt;
-      const mins = Math.floor(diffMs / 60000);
-      if (mins < 1) {
-        el.textContent = 'Updated just now';
-      } else {
-        el.textContent = 'Updated ' + mins + ' min ago';
-      }
+      const mins = Math.floor((Date.now() - window._lastUpdatedAt) / 60000);
+      el.textContent = mins < 1 ? 'Updated just now' : 'Updated ' + mins + ' min ago';
     }
 
     async function loadUsageData() {
@@ -256,28 +487,19 @@
         const data = await window.prominenceAPI.getUsageData();
         renderUsageData(data);
         window._lastUpdatedAt = Date.now();
-      } catch {
-        renderUsageData(null);
-      }
+      } catch { renderUsageData(null); }
     }
 
     async function handleRefreshClick() {
       const btn = document.getElementById('refresh-btn');
       if (btn) btn.textContent = '...';
       await window.prominenceAPI.requestRefresh();
-      if (btn) btn.textContent = 'Refresh';
+      if (btn) btn.textContent = 'REFRESH';
     }
 
-    // Load on startup
     loadUsageData();
+    setInterval(() => { updateCountdown(); updateLastUpdatedText(); }, 60000);
 
-    // Update countdown and last-updated text every 60 seconds
-    setInterval(() => {
-      updateCountdown();
-      updateLastUpdatedText();
-    }, 60000);
-
-    // Listen for push updates from main process
     window.prominenceAPI.onUsageDataUpdated((data) => {
       renderUsageData(data);
       window._lastUpdatedAt = Date.now();
