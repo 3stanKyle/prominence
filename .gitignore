@@ -11,3 +11,10 @@ Thumbs.db
 *.deb
 *.rpm
 release/
+
+# Dev/agent artifacts
+CLAUDE.md
+prd.json
+progress.txt
+SETUP.md
+.claude/

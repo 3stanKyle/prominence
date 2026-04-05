@@ -1,89 +1,79 @@
+<div align="center">
+
 # Prominence
 
-**A desktop HUD that tracks your Claude Code usage in real time.**
+### A desktop HUD for Claude Code power users
 
-Prominence is a lightweight Electron app that lives in your system tray and shows your Claude Code plan usage at a glance. It displays per-model usage bars, reset countdowns, extra usage balance, and an animated pixel character that walks when you're actively using Claude Code.
+Track your usage limits, reset countdowns, and extra usage balance in real time.
 
-Built for Claude Code power users who want to keep an eye on their limits without leaving their terminal.
+![Prominence HUD](docs/screenshot.png)
 
-![Windows](https://img.shields.io/badge/platform-Windows-blue)
-![macOS](https://img.shields.io/badge/platform-macOS-blue)
-![Linux](https://img.shields.io/badge/platform-Linux-blue)
-![License](https://img.shields.io/badge/license-MIT-green)
+![Windows](https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)
+![macOS](https://img.shields.io/badge/macOS-000000?style=for-the-badge&logo=apple&logoColor=white)
+![Linux](https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)
+![License](https://img.shields.io/github/license/3stanKyle/prominence?style=for-the-badge)
 
-<!-- Add a screenshot here -->
-<!-- ![Prominence HUD](docs/screenshot.png) -->
+[Download](#download) | [Quick Start](#quick-start) | [Features](#features) | [Auto-Launch](#auto-launch-with-claude-code)
+
+</div>
+
+---
+
+## Why Prominence?
+
+If you use Claude Code daily, you've probably hit a usage limit without warning. Prominence fixes that. It's a tiny floating HUD that stays on your screen and shows you exactly where you stand, so you can pace your usage and avoid surprises.
 
 ## Features
 
-- **Real-time usage tracking** - 5-hour and 7-day usage limits with color-coded progress bars (green/yellow/red)
-- **Per-model breakdown** - See Opus, Sonnet, and other model-specific usage when available
-- **Reset countdown** - Know exactly when your limits reset
-- **Extra usage balance** - See your remaining monthly overage credits
-- **Plan detection** - Automatically detects your Pro/Max plan
-- **Activity indicator** - Animated pixel character walks when Claude Code is running, idles when it's not
-- **Glass HUD design** - Frosted glass card with Claude orange branding
-- **Draggable & persistent** - Position the HUD anywhere on screen, it stays put
-- **Auto-refresh** - Updates every 5 minutes, with manual refresh button
-- **Single instance** - Relaunching just refreshes the existing HUD
-- **Auto-launch hook** - Optionally starts with every Claude Code session
-- **Lightweight** - ~60MB memory in tray, no visible window until you need it
+| Feature | Description |
+|---------|-------------|
+| **Usage bars** | 5-hour and 7-day limits with color-coded progress (green / yellow / red) |
+| **Per-model breakdown** | Opus, Sonnet, and other model-specific usage when available |
+| **Reset countdown** | Exact time until your limits refresh |
+| **Extra usage balance** | Remaining monthly overage credits at a glance |
+| **Plan detection** | Automatically shows your Pro or Max plan |
+| **Activity indicator** | Pixel character walks when Claude Code is running, idles when it's not |
+| **Glass HUD** | Dark frosted glass card with Claude orange accents |
+| **Draggable** | Position the HUD anywhere on screen |
+| **Auto-refresh** | Updates every 5 minutes with manual refresh button |
+| **Single instance** | Relaunching just refreshes the existing HUD |
+| **Auto-launch** | Optionally starts with every Claude Code session |
+| **Lightweight** | ~60MB memory, lives in system tray |
+
+## Download
+
+Grab the latest installer from [**Releases**](https://github.com/3stanKyle/prominence/releases):
+
+| Platform | File |
+|----------|------|
+| Windows  | `Prominence-Setup-x.x.x.exe` |
+| macOS    | `Prominence-x.x.x.dmg` |
+| Linux    | `Prominence-x.x.x.AppImage` |
 
 ## Quick Start
 
-### From Source
+### From installer
+
+Download, install, run. Click the pixel character in your system tray to open the HUD.
+
+### From source
 
 ```bash
-git clone https://github.com/3stankyle/prominence.git
+git clone https://github.com/3stanKyle/prominence.git
 cd prominence
 npm install
 npm start
 ```
 
-Click the orange pixel character in your system tray to open the HUD.
+### Requirements
 
-### Download Binary
-
-Check [Releases](https://github.com/3stankyle/prominence/releases) for pre-built installers:
-
-| Platform | Download |
-|----------|----------|
-| Windows  | `Prominence-Setup-x.x.x.exe` |
-| macOS    | `Prominence-x.x.x.dmg` |
-| Linux    | `Prominence-x.x.x.AppImage` |
-
-## Requirements
-
-- **Claude Code** installed and logged in (`claude login`)
-- **Node.js 18+** (if running from source)
-- An active **Claude Pro or Max** subscription
-
-Prominence reads your OAuth token from `~/.claude/.credentials.json` (created when you log in to Claude Code) and calls the Anthropic API directly. No API keys needed.
-
-## How It Works
-
-Prominence fetches usage data from `api.anthropic.com/api/oauth/usage` using your existing Claude Code OAuth token. It never stores or transmits your data anywhere else.
-
-```
-System Tray Icon
-    |
-    v
-Floating Glass HUD
-    |
-    +-- 5-Hour Usage ████████░░ 34%
-    +-- 7-Day Usage  ██░░░░░░░░  5%
-    +-- Sonnet (7d)  █░░░░░░░░░  2%
-    |
-    +-- Resets in 4h 23m
-    |
-    +-- Extra Usage: $2000.00 remaining
-    |
-    +-- [REFRESH]  Updated just now
-```
+- [Claude Code](https://claude.ai/code) installed and logged in (`claude login`)
+- An active **Claude Pro** or **Max** subscription
+- Node.js 18+ (if running from source)
 
 ## Auto-Launch with Claude Code
 
-You can configure Prominence to start automatically whenever you open a Claude Code session. Add this to your `~/.claude/settings.json`:
+Add this to `~/.claude/settings.json` to start Prominence automatically with every Claude Code session:
 
 ```json
 {
@@ -104,7 +94,28 @@ You can configure Prominence to start automatically whenever you open a Claude C
 }
 ```
 
-Replace `/path/to/prominence` with your actual install path. The single-instance lock means relaunching just refreshes the existing HUD.
+Replace `/path/to/prominence` with your install path. The single-instance lock means relaunching just refreshes data.
+
+## How It Works
+
+```
+                          ┌─────────────────────────┐
+~/.claude/.credentials.json │                         │
+        │                   │   Floating Glass HUD    │
+        │ OAuth token       │                         │
+        ▼                   │   Hi, John  [MAX]  - x  │
+┌──────────────┐            │   ░░░░░░░░░░░░░░░░░░░░  │
+│  Anthropic   │  usage %   │   5-Hour        23%     │
+│  OAuth API   │──────────▶ │   ████░░░░░░░░░░░░░░░░  │
+│  /api/oauth/ │            │   7-Day          5%     │
+│    usage     │            │   █░░░░░░░░░░░░░░░░░░░  │
+└──────────────┘            │                         │
+                            │   Resets in 4h 23m      │
+                            │   Extra: $2000 left     │
+                            └─────────────────────────┘
+```
+
+Prominence reads your existing OAuth token from `~/.claude/.credentials.json` and calls `api.anthropic.com/api/oauth/usage` directly. No extra API keys needed.
 
 ## Usage
 
@@ -112,22 +123,13 @@ Replace `/path/to/prominence` with your actual install path. The single-instance
 |--------|-----|
 | Open HUD | Click tray icon |
 | Move HUD | Drag the title bar |
-| Refresh data | Click REFRESH button or use tray menu |
-| Minimize to tray | Click the `–` button |
-| Close to tray | Click the `x` button |
-| Quit app | Right-click tray icon > Quit |
-| Keyboard close | Press `Escape` |
+| Refresh | Click `REFRESH` or tray menu |
+| Minimize | `–` button (hides to tray) |
+| Close | `x` button (hides to tray) |
+| Quit | Right-click tray > Quit |
+| Keyboard | `Escape` to close |
 
-## Development
-
-```bash
-npm install          # install dependencies
-npm start            # compile + launch
-npm run typecheck    # type check without building
-npm run build        # package for distribution
-```
-
-### Project Structure
+## Project Structure
 
 ```
 src/
@@ -138,44 +140,50 @@ src/
     usageService.ts   # Anthropic API client for usage data
     preload.ts        # Secure IPC bridge for renderer
   renderer/
-    index.html        # HUD UI: glass card, progress bars, animations
+    index.html        # HUD UI: glass card, progress bars, pixel character
 ```
 
-### Architecture
+## Development
 
-- **Main process** manages the tray icon, BrowserWindow, and all API calls
-- **Renderer process** displays the HUD with vanilla HTML/CSS/JS (no framework)
-- **IPC bridge** connects them securely via `contextBridge.exposeInMainWorld`
-- **Data source**: Direct HTTPS to `api.anthropic.com/api/oauth/usage` with OAuth token from `~/.claude/.credentials.json`
+```bash
+npm install          # install dependencies
+npm start            # compile + launch
+npm run typecheck    # type check only
+npm run build        # package for distribution
+```
 
-## Building Releases
+### Creating a release
 
-Tagged releases trigger GitHub Actions to build installers for all platforms:
+Tag a version to trigger the GitHub Actions build:
 
 ```bash
 git tag v0.1.0
 git push origin v0.1.0
 ```
 
-The workflow produces Windows `.exe`, macOS `.dmg`, and Linux `.AppImage` artifacts attached to the GitHub Release.
+This builds Windows `.exe`, macOS `.dmg`, and Linux `.AppImage` and attaches them to the GitHub Release automatically.
 
 ## Privacy
 
-Prominence only communicates with `api.anthropic.com` using your existing Claude Code OAuth token. It does not:
+Prominence only talks to `api.anthropic.com` using your existing Claude Code token.
 
-- Collect telemetry or analytics
-- Send data to any third-party service
-- Store credentials (reads from `~/.claude/` which Claude Code manages)
-- Require any additional API keys
+- No telemetry or analytics
+- No third-party services
+- No credential storage (reads from `~/.claude/` which Claude Code manages)
+- Fully open source
 
 ## Contributing
 
-PRs welcome. Please keep changes focused and ensure `npm run typecheck` passes.
+PRs welcome. Run `npm run typecheck` before submitting.
 
 ## License
 
-MIT - see [LICENSE](LICENSE)
+[MIT](LICENSE)
 
 ---
 
-*Built by [3stankyle](https://github.com/3stankyle) for the Claude Code community.*
+<div align="center">
+
+Built by [3stanKyle](https://github.com/3stanKyle) for the Claude Code community.
+
+</div>
