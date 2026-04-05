@@ -46,24 +46,32 @@
       color: #808090;
       padding: 8px 0;
     }
-    .model-row {
+    .section-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: #808090;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+    .bucket-row {
       margin-bottom: 10px;
     }
-    .model-row:last-child {
+    .bucket-row:last-child {
       margin-bottom: 0;
     }
-    .model-label {
+    .bucket-label {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 4px;
     }
-    .model-name {
+    .bucket-name {
       font-size: 12px;
       font-weight: 600;
       color: #c0c0d0;
     }
-    .model-count {
+    .bucket-pct {
       font-size: 11px;
       color: #808090;
     }
@@ -87,24 +95,16 @@
       font-size: 12px;
       color: #808090;
     }
-    .section-title {
-      font-size: 11px;
-      font-weight: 600;
-      color: #808090;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 8px;
-    }
     .section-divider {
       margin-top: 14px;
       padding-top: 12px;
       border-top: 1px solid #2a2a40;
     }
-    .session-info {
+    .extra-usage {
       font-size: 12px;
       color: #c0c0d0;
     }
-    .session-unavailable {
+    .extra-usage-disabled {
       font-size: 12px;
       color: #808090;
     }
@@ -150,30 +150,30 @@
       }
     });
 
-    function getBarColor(ratio) {
-      if (ratio >= 0.85) return 'var(--color-red)';
-      if (ratio >= 0.60) return 'var(--color-yellow)';
+    function getBarColor(pct) {
+      if (pct >= 85) return 'var(--color-red)';
+      if (pct >= 60) return 'var(--color-yellow)';
       return 'var(--color-green)';
     }
 
     function renderUsageData(data) {
       const container = document.getElementById('usage-content');
-      if (!data || !data.models || data.models.length === 0) {
+      if (!data || !data.buckets || data.buckets.length === 0) {
         container.innerHTML = '<p class="error-msg">Unable to fetch usage data</p>';
         return;
       }
 
-      let html = '<div class="section-title">Weekly Usage</div>';
-      for (const model of data.models) {
-        const ratio = model.limit > 0 ? model.used / model.limit : 0;
-        const pct = Math.min(ratio * 100, 100).toFixed(1);
-        const color = getBarColor(ratio);
+      let html = '<div class="section-title">Usage Limits</div>';
+
+      for (const bucket of data.buckets) {
+        const pct = Math.min(bucket.utilization, 100);
+        const color = getBarColor(pct);
 
         html += `
-          <div class="model-row">
-            <div class="model-label">
-              <span class="model-name">${model.name}</span>
-              <span class="model-count">${model.used} / ${model.limit}</span>
+          <div class="bucket-row">
+            <div class="bucket-label">
+              <span class="bucket-name">${bucket.label}</span>
+              <span class="bucket-pct">${pct.toFixed(0)}%</span>
             </div>
             <div class="progress-bar">
               <div class="progress-fill" style="width: ${pct}%; background: ${color};"></div>
@@ -182,70 +182,38 @@
         `;
       }
 
-      // Add reset countdown section
-      const resetTime = data.models[0] && data.models[0].resetTime;
+      // Reset countdown from the first bucket with a reset time
+      const firstReset = data.buckets.find(b => b.resetsAt);
       html += '<div id="reset-countdown" class="reset-countdown">';
-      html += resetTime ? formatCountdown(resetTime) : 'Reset time unavailable';
-      html += '</div>';
-
-      // Add current session section
-      html += '<div class="section-divider">';
-      html += '<div class="section-title">Current Session</div>';
-      if (data.session && (data.session.used > 0 || data.session.limit > 0)) {
-        const sessionRatio = data.session.limit > 0 ? data.session.used / data.session.limit : 0;
-        const sessionPct = Math.min(sessionRatio * 100, 100).toFixed(1);
-        const sessionColor = getBarColor(sessionRatio);
-        html += `
-          <div class="model-row">
-            <div class="model-label">
-              <span class="model-name">Messages</span>
-              <span class="model-count">${data.session.used} / ${data.session.limit}</span>
-            </div>
-            <div class="progress-bar">
-              <div class="progress-fill" style="width: ${sessionPct}%; background: ${sessionColor};"></div>
-            </div>
-          </div>
-        `;
+      if (firstReset && firstReset.resetsAt) {
+        html += formatCountdown(firstReset.resetsAt);
+        window._resetTime = firstReset.resetsAt;
       } else {
-        html += '<p class="session-unavailable">Session data not available</p>';
+        html += 'Reset time unavailable';
+        window._resetTime = null;
       }
       html += '</div>';
 
-      // Add footer with last-updated text and refresh button
+      // Extra usage section
+      if (data.extraUsage) {
+        html += '<div class="section-divider">';
+        html += '<div class="section-title">Extra Usage</div>';
+        html += `<p class="extra-usage">$${data.extraUsage.usedCredits.toFixed(2)} / $${data.extraUsage.monthlyLimit.toFixed(0)} monthly</p>`;
+        html += '</div>';
+      }
+
+      // Footer
       html += '<div class="footer">';
       html += '<span id="last-updated" class="last-updated">Updated just now</span>';
       html += '<button id="refresh-btn" class="refresh-btn" onclick="handleRefreshClick()">Refresh</button>';
       html += '</div>';
 
       container.innerHTML = html;
-
-      // Store reset time for interval updates
-      window._resetTime = resetTime || null;
     }
 
-    function parseResetTime(resetTime) {
-      // Try ISO date string first
-      const asDate = new Date(resetTime);
-      if (!isNaN(asDate.getTime())) {
-        return asDate;
-      }
-      // Try relative format like "3d 2h 15m"
-      const parts = resetTime.match(/(\d+)\s*d/i);
-      const hours = resetTime.match(/(\d+)\s*h/i);
-      const mins = resetTime.match(/(\d+)\s*m/i);
-      if (parts || hours || mins) {
-        const totalMs =
-          ((parts ? parseInt(parts[1], 10) : 0) * 86400000) +
-          ((hours ? parseInt(hours[1], 10) : 0) * 3600000) +
-          ((mins ? parseInt(mins[1], 10) : 0) * 60000);
-        return new Date(Date.now() + totalMs);
-      }
-      return null;
-    }
-
-    function formatCountdown(resetTime) {
-      const target = parseResetTime(resetTime);
-      if (!target) return 'Reset time unavailable';
+    function formatCountdown(isoDate) {
+      const target = new Date(isoDate);
+      if (isNaN(target.getTime())) return 'Reset time unavailable';
 
       const diff = target.getTime() - Date.now();
       if (diff <= 0) return 'Resets soon';
@@ -268,8 +236,8 @@
       el.textContent = formatCountdown(window._resetTime);
     }
 
-    // Track when data was last updated
     window._lastUpdatedAt = null;
+    window._resetTime = null;
 
     function updateLastUpdatedText() {
       const el = document.getElementById('last-updated');
@@ -299,9 +267,6 @@
       await window.prominenceAPI.requestRefresh();
       if (btn) btn.textContent = 'Refresh';
     }
-
-    // Initialize reset time storage
-    window._resetTime = null;
 
     // Load on startup
     loadUsageData();

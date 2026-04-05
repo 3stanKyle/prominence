@@ -11,6 +11,9 @@ Started: 2026-04-04
 - TypeScript compiles from `src/` to `dist/`, entry point is `dist/main/index.js`
 - For transparent frameless windows: `html,body { background: transparent }`, visible background on a container div
 - Overlay window is hidden/shown (not destroyed/recreated) for performance — use `getOverlayWindow()` to access it
+- Usage data comes from `https://api.anthropic.com/api/oauth/usage` with OAuth token from `~/.claude/.credentials.json` and `anthropic-beta: oauth-2025-04-20` header
+- The `claude usage` CLI command hangs when called from child processes — use direct HTTPS API calls instead
+- API returns utilization percentages (0-100), not raw counts. Fields: `five_hour`, `seven_day`, `seven_day_opus`, `seven_day_sonnet`, `seven_day_cowork`, `extra_usage`
 ---
 
 ## 2026-04-04 - US-001
@@ -118,4 +121,17 @@ Started: 2026-04-04
   - Hook matcher `"startup"` fires only on new sessions (not resume/clear/compact)
   - Use trailing `&` in the command and `timeout: 5` to ensure the hook doesn't block Claude Code session startup
   - The single-instance lock from US-008 makes the hook idempotent — relaunching just triggers a refresh
+---
+
+## 2026-04-05 - Fix: Usage data fetching (root cause: CLI hangs)
+- What was implemented: Replaced broken `claude usage` CLI parsing with direct HTTPS call to `https://api.anthropic.com/api/oauth/usage` using OAuth token from `~/.claude/.credentials.json`. Updated renderer to display utilization percentages instead of raw counts. Shows 5-hour, 7-day, and per-model (Sonnet, Opus) usage bars plus extra usage credits.
+- Files changed:
+  - `src/main/usageService.ts` — rewrote: removed `execFile('claude')`, added `https.request` to API, reads OAuth token from credentials file, new types `UsageBucket`/`ExtraUsage`/`UsageData`
+  - `src/renderer/index.html` — updated to render percentage-based bars, added extra usage section, simplified countdown to ISO dates only
+- **Learnings for future iterations:**
+  - `claude usage` CLI hangs when spawned as a child process (exit code 124 on timeout). Use the API directly.
+  - The OAuth usage endpoint requires `anthropic-beta: oauth-2025-04-20` header
+  - Token scope `user:profile` is required for the usage endpoint (the default OAuth flow includes it)
+  - API returns `utilization` as 0-100 float, `resets_at` as ISO date strings
+  - Per-model fields like `seven_day_opus` and `seven_day_sonnet` may be null if the user hasn't used that model
 ---

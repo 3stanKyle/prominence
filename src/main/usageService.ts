@@ -1,21 +1,24 @@
-import { execFile } from 'child_process';
+import https from 'https';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
 import { getOverlayWindow } from './overlay';
 
-export interface ModelUsage {
-  name: string;
-  used: number;
-  limit: number;
-  resetTime: string | null;
+export interface UsageBucket {
+  label: string;
+  utilization: number; // 0-100 percentage
+  resetsAt: string | null; // ISO date string
 }
 
-export interface SessionUsage {
-  used: number;
-  limit: number;
+export interface ExtraUsage {
+  isEnabled: boolean;
+  monthlyLimit: number;
+  usedCredits: number;
 }
 
 export interface UsageData {
-  models: ModelUsage[];
-  session: SessionUsage;
+  buckets: UsageBucket[];
+  extraUsage: ExtraUsage | null;
 }
 
 /**
@@ -30,91 +33,119 @@ export async function refreshAndPush(): Promise<void> {
 }
 
 /**
- * Fetch usage data by running `claude usage` CLI command and parsing its output.
- * Returns null if the data source is unavailable.
+ * Read the OAuth access token from ~/.claude/.credentials.json
  */
-export function fetchUsageData(): Promise<UsageData | null> {
-  return new Promise((resolve) => {
-    execFile('claude', ['usage'], { timeout: 10000 }, (error, stdout, stderr) => {
-      if (error || !stdout) {
-        resolve(null);
-        return;
-      }
-
-      const parsed = parseUsageOutput(stdout);
-      resolve(parsed);
-    });
-  });
-}
-
-/**
- * Parse the text output from `claude usage` into structured UsageData.
- * Returns null if the output cannot be parsed.
- */
-function parseUsageOutput(output: string): UsageData | null {
+function readAccessToken(): string | null {
   try {
-    const models: ModelUsage[] = [];
-    let resetTime: string | null = null;
-    let sessionUsed = 0;
-    let sessionLimit = 0;
-
-    const lines = output.split('\n').map((l) => l.trim()).filter(Boolean);
-
-    for (const line of lines) {
-      // Try to match model usage lines like "Opus: 142 / 200" or "claude-sonnet-4-6: 50 / 100"
-      const modelMatch = line.match(/^(.+?):\s*(\d+)\s*\/\s*(\d+)/i);
-      if (modelMatch) {
-        const name = normalizeModelName(modelMatch[1].trim());
-        const used = parseInt(modelMatch[2], 10);
-        const limit = parseInt(modelMatch[3], 10);
-        models.push({ name, used, limit, resetTime: null });
-        continue;
-      }
-
-      // Try to match reset time like "Resets: 2026-04-07T00:00:00Z" or "Resets in 3d 2h"
-      const resetMatch = line.match(/reset[s]?\s*(?:in\s+)?:?\s*(.+)/i);
-      if (resetMatch) {
-        resetTime = resetMatch[1].trim();
-        continue;
-      }
-
-      // Try to match session line like "Session: 25 / 100"
-      const sessionMatch = line.match(/session:\s*(\d+)\s*\/\s*(\d+)/i);
-      if (sessionMatch) {
-        sessionUsed = parseInt(sessionMatch[1], 10);
-        sessionLimit = parseInt(sessionMatch[2], 10);
-      }
-    }
-
-    // If we parsed no models, the output wasn't in the expected format
-    if (models.length === 0) {
-      return null;
-    }
-
-    // Apply reset time to all models
-    if (resetTime) {
-      for (const model of models) {
-        model.resetTime = resetTime;
-      }
-    }
-
-    return {
-      models,
-      session: { used: sessionUsed, limit: sessionLimit },
-    };
+    const credPath = path.join(os.homedir(), '.claude', '.credentials.json');
+    const raw = fs.readFileSync(credPath, 'utf8');
+    const creds = JSON.parse(raw);
+    return creds?.claudeAiOauth?.accessToken || null;
   } catch {
     return null;
   }
 }
 
 /**
- * Normalize model names to friendly display names.
+ * Fetch usage data from the Anthropic OAuth usage API.
+ * Returns null if the data source is unavailable.
  */
-function normalizeModelName(raw: string): string {
-  const lower = raw.toLowerCase();
-  if (lower.includes('opus')) return 'Opus';
-  if (lower.includes('sonnet')) return 'Sonnet';
-  if (lower.includes('haiku')) return 'Haiku';
-  // Return original with first letter capitalized
-  return raw.charAt(0).toUpperCase() + raw.slice(1);
+export function fetchUsageData(): Promise<UsageData | null> {
+  return new Promise((resolve) => {
+    const token = readAccessToken();
+    if (!token) {
+      resolve(null);
+      return;
+    }
+
+    const options: https.RequestOptions = {
+      hostname: 'api.anthropic.com',
+      path: '/api/oauth/usage',
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'anthropic-beta': 'oauth-2025-04-20',
+      },
+    };
+
+    const req = https.request(options, (res) => {
+      let body = '';
+      res.on('data', (chunk: Buffer) => { body += chunk; });
+      res.on('end', () => {
+        if (res.statusCode !== 200) {
+          resolve(null);
+          return;
+        }
+        resolve(parseApiResponse(body));
+      });
+    });
+
+    req.on('error', () => resolve(null));
+    req.setTimeout(10000, () => { req.destroy(); resolve(null); });
+    req.end();
+  });
+}
+
+/**
+ * Parse the API JSON response into our UsageData format.
+ */
+function parseApiResponse(body: string): UsageData | null {
+  try {
+    const raw = JSON.parse(body);
+    const buckets: UsageBucket[] = [];
+
+    // 5-hour window
+    if (raw.five_hour) {
+      buckets.push({
+        label: '5-Hour',
+        utilization: raw.five_hour.utilization ?? 0,
+        resetsAt: raw.five_hour.resets_at || null,
+      });
+    }
+
+    // 7-day overall
+    if (raw.seven_day) {
+      buckets.push({
+        label: '7-Day',
+        utilization: raw.seven_day.utilization ?? 0,
+        resetsAt: raw.seven_day.resets_at || null,
+      });
+    }
+
+    // Per-model 7-day buckets
+    const modelKeys: Array<{ key: string; label: string }> = [
+      { key: 'seven_day_opus', label: 'Opus (7d)' },
+      { key: 'seven_day_sonnet', label: 'Sonnet (7d)' },
+      { key: 'seven_day_cowork', label: 'Cowork (7d)' },
+      { key: 'seven_day_oauth_apps', label: 'OAuth Apps (7d)' },
+    ];
+
+    for (const { key, label } of modelKeys) {
+      if (raw[key] && raw[key].utilization != null) {
+        buckets.push({
+          label,
+          utilization: raw[key].utilization,
+          resetsAt: raw[key].resets_at || null,
+        });
+      }
+    }
+
+    // Extra usage (overages)
+    let extraUsage: ExtraUsage | null = null;
+    if (raw.extra_usage && raw.extra_usage.is_enabled) {
+      extraUsage = {
+        isEnabled: true,
+        monthlyLimit: raw.extra_usage.monthly_limit ?? 0,
+        usedCredits: raw.extra_usage.used_credits ?? 0,
+      };
+    }
+
+    if (buckets.length === 0) {
+      return null;
+    }
+
+    return { buckets, extraUsage };
+  } catch {
+    return null;
+  }
 }
