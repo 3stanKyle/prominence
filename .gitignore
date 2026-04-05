@@ -17,4 +17,7 @@ CLAUDE.md
 prd.json
 progress.txt
 SETUP.md
+prompt.md
+ralph.sh
+tasks/
 .claude/
