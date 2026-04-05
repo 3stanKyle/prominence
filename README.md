@@ -40,23 +40,13 @@ If you use Claude Code daily, you've probably hit a usage limit without warning.
 | **Auto-launch** | Optionally starts with every Claude Code session |
 | **Lightweight** | ~60MB memory, lives in system tray |
 
-## Download
-
-Grab the latest installer from [**Releases**](https://github.com/3stanKyle/prominence/releases):
-
-| Platform | File |
-|----------|------|
-| Windows  | `Prominence-Setup-x.x.x.exe` |
-| macOS    | `Prominence-x.x.x.dmg` |
-| Linux    | `Prominence-x.x.x.AppImage` |
-
 ## Quick Start
 
-### From installer
+### Windows
 
-Download, install, run. Click the pixel character in your system tray to open the HUD.
+Download the installer from [**Releases**](https://github.com/3stanKyle/prominence/releases) and run it. That's it.
 
-### From source
+### From source (all platforms)
 
 ```bash
 git clone https://github.com/3stanKyle/prominence.git
