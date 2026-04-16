@@ -397,7 +397,8 @@
     function renderUsageData(data) {
       const container = document.getElementById('usage-content');
       if (!data || !data.buckets || data.buckets.length === 0) {
-        container.innerHTML = '<p class="error-msg">Unable to fetch usage data</p>';
+        const msg = (data && data.error) || 'Unable to fetch usage data';
+        container.innerHTML = '<p class="error-msg">' + msg + '</p>';
         return;
       }
 
